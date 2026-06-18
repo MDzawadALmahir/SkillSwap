@@ -1,0 +1,282 @@
+/* Shared admin shell — use with styles.css on every admin page */
+body.admin-shell {
+  background: var(--bg);
+  min-height: 100vh;
+}
+
+.admin-shell .admin-brand-title {
+  font-size: 34px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.admin-shell .page-header h1 {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--brand);
+}
+
+.admin-shell .page-header p {
+  color: var(--muted);
+  margin-top: 6px;
+  font-size: 16px;
+}
+
+.admin-shell .search-bar {
+  background: var(--surface);
+  border-radius: 14px;
+  padding: 12px 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  border: 1px solid var(--line);
+  box-shadow: 0 2px 8px rgba(17, 24, 39, 0.06);
+}
+
+.admin-shell .search-bar input {
+  flex: 1;
+  border: none;
+  padding: 12px 0;
+  font-size: 15px;
+  outline: none;
+  background: transparent;
+}
+
+.admin-shell .user-count {
+  font-weight: 700;
+  margin-bottom: 16px;
+  color: #334155;
+  font-size: 17px;
+}
+
+.admin-shell .user-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.admin-shell .user-card {
+  background: var(--surface);
+  border-radius: 16px;
+  padding: 20px 22px;
+  border: 1px solid var(--line);
+  box-shadow: 0 2px 8px rgba(17, 24, 39, 0.06);
+}
+
+.admin-shell .user-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.admin-shell .user-name {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--ink);
+}
+
+.admin-shell .user-email {
+  color: var(--muted);
+  font-size: 14px;
+  margin-top: 4px;
+}
+
+.admin-shell .user-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 10px 0;
+  font-size: 14px;
+}
+
+.admin-shell .stat-badge {
+  background: #f1f5f9;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+.admin-shell .reliability-high {
+  color: #10b981;
+}
+
+.admin-shell .reliability-low {
+  color: #ef4444;
+}
+
+.admin-shell .offers-section {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.admin-shell .skill-pill {
+  background: #eef2ff;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #3730a3;
+}
+
+.admin-shell .offers-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: #475569;
+}
+
+.admin-shell .action-buttons {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.admin-shell .btn-sm {
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+}
+
+.admin-shell .btn-edit {
+  background: var(--brand);
+  color: #fff;
+}
+
+.admin-shell .btn-warn {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.admin-shell .overview-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.admin-shell .overview-card {
+  background: var(--surface);
+  border-radius: 16px;
+  padding: 18px;
+  text-align: center;
+  border: 1px solid var(--line);
+  box-shadow: 0 2px 8px rgba(17, 24, 39, 0.06);
+}
+
+.admin-shell .overview-number {
+  font-size: 1.85rem;
+  font-weight: 800;
+  color: var(--ink);
+}
+
+.admin-shell .overview-label {
+  font-size: 14px;
+  color: var(--muted);
+  margin-top: 6px;
+}
+
+.admin-shell .search-row {
+  background: var(--surface);
+  border-radius: 14px;
+  padding: 10px 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  border: 1px solid var(--line);
+}
+
+.admin-shell .search-row input {
+  flex: 1;
+  border: none;
+  padding: 12px 0;
+  font-size: 15px;
+  outline: none;
+  background: transparent;
+}
+
+.admin-shell .filter-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 22px;
+  flex-wrap: wrap;
+}
+
+.admin-shell .filter-btn {
+  padding: 12px 22px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  min-height: 46px;
+}
+
+.admin-shell .filter-btn:hover {
+  background: #f8fafc;
+}
+
+.admin-shell .filter-btn.active {
+  background: var(--brand);
+  color: #fff;
+  border-color: var(--brand);
+}
+
+.admin-shell .transactions-section {
+  background: var(--surface);
+  border-radius: 16px;
+  padding: 22px;
+  margin-bottom: 22px;
+  border: 1px solid var(--line);
+  box-shadow: 0 2px 8px rgba(17, 24, 39, 0.06);
+}
+
+.admin-shell .section-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+  color: var(--ink);
+}
+
+.admin-shell .empty-transactions {
+  text-align: center;
+  padding: 40px 20px;
+  color: #94a3b8;
+}
+
+.admin-shell .metrics-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+}
+
+.admin-shell .metric-card {
+  background: var(--surface);
+  border-radius: 16px;
+  padding: 20px;
+  text-align: center;
+  border: 1px solid var(--line);
+}
+
+.admin-shell .metric-value {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: #7b2ff7;
+}
+
+.admin-shell .metric-label {
+  font-size: 14px;
+  color: var(--muted);
+  margin-top: 6px;
+}

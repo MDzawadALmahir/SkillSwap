@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>SkillSwap | Complaints & feedback</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="navbar">
+  <div class="logo-wrap">
+    <div class="logo-icon">S</div>
+    <div>
+      <div style="font-size:34px;font-weight:800;line-height:1;">SkillSwap</div>
+      <div class="logo-sub">Time Banking System</div>
+    </div>
+  </div>
+  <div class="nav-links">
+    <a href="welcome.html">Home</a>
+    <a href="profile.html">Profile</a>
+    <a href="users.html">Search</a>
+    <a href="trades.html">Trades</a>
+    <a href="wallet.html">Wallet</a>
+    <a href="messages.html">Messages</a>
+    <a href="certificates.html">Certificates</a>
+    <a href="complaints.html" class="active">Complaints</a>
+  </div>
+  <div class="nav-actions">
+    <span id="navChip" style="font-size:14px;"></span>
+    <button type="button" class="btn btn-ghost btn-sm" onclick="logout()">Logout</button>
+  </div>
+</div>
+
+<div class="container">
+  <div class="title">Complaints & support</div>
+  <div class="subtitle">Report another member, a bug, or a system issue. Admins can reply here—you will see their feedback below.</div>
+
+  <div class="card">
+    <h3 style="margin-bottom:12px;">New complaint</h3>
+    <label class="metric-label">Type</label>
+    <select id="cat">
+      <option value="user_issue">Issue with another user</option>
+      <option value="bug">Bug / something broken</option>
+      <option value="system">System error</option>
+      <option value="other">Other</option>
+    </select>
+    <label class="metric-label" style="display:block;margin-top:10px;">Reported user ID (optional, for user issues)</label>
+    <input id="targetId" placeholder="e.g. 5 — leave empty if not about a person">
+    <label class="metric-label" style="display:block;margin-top:10px;">Subject</label>
+    <input id="subj" placeholder="Short summary">
+    <label class="metric-label" style="display:block;margin-top:10px;">Details</label>
+    <textarea id="body" rows="5" style="width:100%;padding:12px;border-radius:10px;border:1px solid #d9dfec;font-size:15px;margin-top:8px;"></textarea>
+    <p id="formMsg" style="margin-top:10px;min-height:22px;"></p>
+    <button type="button" class="btn" id="sendBtn">Submit complaint</button>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-bottom:12px;">Your submissions</h3>
+    <div id="list"></div>
+  </div>
+</div>
+
+<script src="frontend-api.js"></script>
+<script src="frontend-session.js"></script>
+<script>
+  const me = requireMember();
+  if (!me) throw new Error("redirect");
+  const uid = Number(me.id);
+  renderMemberNavChip("navChip");
+
+  function esc(s) {
+    const d = document.createElement("div");
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  async function loadList() {
+    const box = document.getElementById("list");
+    try {
+      const { complaints } = await apiRequest(`/api/complaints?user_id=${uid}`);
+      if (!complaints.length) {
+        box.innerHTML = '<p class="metric-label">No complaints yet.</p>';
+        return;
+      }
+      box.innerHTML = complaints
+        .map(
+          (c) => `
+        <div style="border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px;">
+          <div style="font-weight:800;">${esc(c.subject)} <span class="pill">${esc(c.status)}</span> <span class="pill">${esc(c.category)}</span></div>
+          <div class="metric-label" style="margin-top:6px;">${esc(c.body)}</div>
+          ${c.target_user_name ? `<div class="metric-label" style="margin-top:6px;">About user: ${esc(c.target_user_name)}</div>` : ""}
+          ${
+            c.admin_feedback
+              ? `<div style="margin-top:10px;padding:10px;background:#eef2ff;border-radius:8px;"><strong>Admin feedback:</strong> ${esc(c.admin_feedback)}</div>`
+              : '<div class="metric-label" style="margin-top:8px;">No admin reply yet.</div>'
+          }
+        </div>`
+        )
+        .join("");
+    } catch (e) {
+      box.innerHTML = `<p style="color:#dc2626;">${esc(e.message)}</p>`;
+    }
+  }
+
+  document.getElementById("sendBtn").onclick = async () => {
+    const msg = document.getElementById("formMsg");
+    msg.style.color = "#dc2626";
+    msg.textContent = "";
+    const category = document.getElementById("cat").value;
+    const subject = document.getElementById("subj").value.trim();
+    const body = document.getElementById("body").value.trim();
+    let target_user_id = document.getElementById("targetId").value.trim();
+    if (!subject || !body) {
+      msg.textContent = "Subject and details are required.";
+      return;
+    }
+    const payload = { submitted_by_user_id: uid, category, subject, body };
+    if (target_user_id) payload.target_user_id = Number(target_user_id);
+    try {
+      await apiRequest("/api/complaints", { method: "POST", body: JSON.stringify(payload) });
+      msg.style.color = "#16a34a";
+      msg.textContent = "Submitted.";
+      document.getElementById("subj").value = "";
+      document.getElementById("body").value = "";
+      document.getElementById("targetId").value = "";
+      await loadList();
+    } catch (e) {
+      msg.textContent = e.message;
+    }
+  };
+
+  loadList();
+</script>
+</body>
+</html>

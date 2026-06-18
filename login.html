@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Login</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- Navbar -->
+<div class="navbar">
+  <div class="logo-wrap">
+    <div class="logo-icon">S</div>
+    <div>
+      <div style="font-size:40px;font-weight:800;line-height:1;">SkillSwap</div>
+      <div class="logo-sub">Time Banking System</div>
+    </div>
+  </div>
+  <div class="nav-links">
+    <a href="login.html" class="active">Login</a>
+    <a href="signup.html">Signup</a>
+    <a href="admin_login.html">Admin</a>
+  </div>
+</div>
+
+<div class="container" style="max-width:400px;">
+  <div class="card">
+    <h2 style="text-align:center;font-size:36px;">Login</h2>
+    <p style="text-align:center;color:#64748b;margin-top:6px;">Use your email or phone to continue</p>
+    <input id="identifier" placeholder="Email or phone number">
+    <input id="password" placeholder="Password" type="password">
+    <p id="loginMessage" style="margin-top:8px; min-height:20px; color:#ef4444;"></p>
+    <button class="btn" id="loginBtn" style="width:100%;margin-top:6px;">Login</button>
+    <p style="margin-top:12px;text-align:center;font-size:15px;">
+      Don't have account? <a href="signup.html">Signup</a>
+    </p>
+    <p style="margin-top:8px;text-align:center;font-size:15px;">
+      Administrator? <a href="admin_login.html">Admin login</a>
+    </p>
+  </div>
+</div>
+
+<script src="frontend-api.js"></script>
+<script src="frontend-session.js"></script>
+<script>
+  const loginBtn = document.getElementById("loginBtn");
+  const messageEl = document.getElementById("loginMessage");
+
+  loginBtn.addEventListener("click", async () => {
+    const identifier = document.getElementById("identifier").value.trim();
+    const password = document.getElementById("password").value;
+    messageEl.style.color = "#ef4444";
+    messageEl.textContent = "";
+
+    if (!identifier || !password) {
+      messageEl.textContent = "Please enter identifier and password.";
+      return;
+    }
+
+    try {
+      const result = await apiRequest("/api/auth/login", {
+        method: "POST",
+        body: JSON.stringify({ identifier, password }),
+      });
+      setCurrentUser(result.user);
+      messageEl.style.color = "#16a34a";
+      messageEl.textContent = "Login successful. Redirecting...";
+      if (result.user.role === "admin") {
+        messageEl.textContent = "Use Admin Login for administrators.";
+        setCurrentUser(null);
+        return;
+      }
+      window.location.href = "welcome.html";
+    } catch (error) {
+      messageEl.textContent = error.message;
+    }
+  });
+</script>
+
+</body>
+</html>

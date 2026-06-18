@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>SkillSwap | Wallet</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="navbar">
+  <div class="logo-wrap">
+    <div class="logo-icon">S</div>
+    <div>
+      <div style="font-size:34px;font-weight:800;line-height:1;">SkillSwap</div>
+      <div class="logo-sub">Time Banking System</div>
+    </div>
+  </div>
+  <div class="nav-links">
+    <a href="welcome.html">Home</a>
+    <a href="profile.html">Profile</a>
+    <a href="users.html">Search</a>
+    <a href="trades.html">Trades</a>
+    <a href="wallet.html" class="active">Wallet</a>
+    <a href="messages.html">Messages</a>
+    <a href="certificates.html">Certificates</a>
+    <a href="complaints.html">Complaints</a>
+  </div>
+  <div class="nav-actions">
+    <span id="navChip" style="font-size:14px;"></span>
+    <button type="button" class="btn btn-ghost btn-sm" onclick="logout()">Logout</button>
+  </div>
+</div>
+
+<div class="container">
+  <div class="title">Your Wallet</div>
+  <div class="subtitle">Track your time credits and reliability</div>
+
+  <div class="hero">
+    <div>Time Credit Balance</div>
+    <div class="big-number" style="color:#fff;" id="bal">—</div>
+    <div>Available hours for skill exchange</div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="metric-label">Credits Earned (completed sessions you taught)</div>
+      <h3 style="color:#16a34a;font-size:32px;" id="earned">+0</h3>
+    </div>
+    <div class="card">
+      <div class="metric-label">Credits Spent (completed sessions you took)</div>
+      <h3 style="color:#dc2626;font-size:32px;" id="spent">-0</h3>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="row" style="justify-content:space-between;align-items:center;">
+      <div>Reliability Score</div>
+      <span class="badge green" id="relLabel">Excellent</span>
+    </div>
+    <div style="font-size:34px;font-weight:800;color:#16a34a;margin-top:6px;" id="relPct">—</div>
+    <div style="margin-top:8px;height:10px;background:#dbe3f2;border-radius:999px;overflow:hidden;">
+      <div id="relBar" style="height:10px;width:0%;background:#111827;border-radius:999px;"></div>
+    </div>
+    <div class="metric-label" style="margin-top:8px;" id="lastActive">Last active: —</div>
+  </div>
+
+  <div class="card">
+    <div style="font-weight:700;font-size:18px;">Recent completed transactions</div>
+    <div id="recentTx" style="margin-top:12px;"></div>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-bottom:10px;">How Time Credits Work</h3>
+    <p class="metric-label">Earn credits by teaching. Spend credits when you learn. Complete sessions from the Trades page.</p>
+  </div>
+</div>
+
+<script src="frontend-api.js"></script>
+<script src="frontend-session.js"></script>
+<script>
+  const me = requireMember();
+  if (!me) throw new Error("redirect");
+  renderMemberNavChip("navChip");
+
+  function escapeHtml(s) {
+    const d = document.createElement("div");
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  async function load() {
+    const { user } = await apiRequest(`/api/users/${me.id}`);
+    document.getElementById("bal").textContent = user.credits;
+    const rel = Math.round(Number(user.reliability_score));
+    document.getElementById("relPct").textContent = rel + "%";
+    document.getElementById("relBar").style.width = Math.min(100, rel) + "%";
+    document.getElementById("relLabel").textContent = rel >= 80 ? "Excellent" : rel >= 50 ? "Good" : "Low";
+    if (user.last_active) {
+      document.getElementById("lastActive").textContent =
+        "Last active: " + new Date(user.last_active).toLocaleString();
+    }
+
+    const done = await apiRequest(`/api/transactions?involving_user_id=${me.id}&status=completed`);
+    let earned = 0;
+    let spent = 0;
+    (done.transactions || []).forEach((t) => {
+      const h = Number(t.credit_hours);
+      if (t.provider_user_id === me.id) earned += h;
+      if (t.requester_user_id === me.id) spent += h;
+    });
+    document.getElementById("earned").textContent = "+" + earned;
+    document.getElementById("spent").textContent = "-" + spent;
+
+    const recent = (done.transactions || []).slice(0, 5);
+    const box = document.getElementById("recentTx");
+    if (!recent.length) {
+      box.innerHTML =
+        '<div class="pill" style="background:linear-gradient(100deg,#8b3ef8,#4a67e9);color:#fff;">No completed transactions yet</div>';
+      return;
+    }
+    box.innerHTML = recent
+      .map(
+        (t) => `
+      <div style="padding:10px 0;border-bottom:1px solid var(--line);font-size:15px;">
+        <strong>${escapeHtml(t.skill_name)}</strong> · ${Number(t.credit_hours)}h<br>
+        <span class="metric-label">${escapeHtml(t.requester_name)} → ${escapeHtml(t.provider_name)}</span>
+      </div>`
+      )
+      .join("");
+  }
+
+  load().catch((e) => alert(e.message));
+</script>
+</body>
+</html>

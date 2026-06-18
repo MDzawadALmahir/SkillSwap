@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SkillSwap | User Management</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="admin-common.css">
+</head>
+<body class="admin-shell">
+
+<div class="navbar">
+  <div class="logo-wrap">
+    <div class="logo-icon">S</div>
+    <div>
+      <div class="admin-brand-title">SkillSwap</div>
+      <div class="logo-sub">Admin · Time Banking System</div>
+    </div>
+  </div>
+  <div class="nav-links">
+    <a href="admin.html">Home</a>
+    <a href="admin_overview.html">Dashboard</a>
+    <a href="user_management.html" class="active">Users</a>
+    <a href="transaction_monitoring.html">Transactions</a>
+    <a href="admin_support.html">Support</a>
+  </div>
+  <div class="nav-actions">
+    <span id="adminChip" style="font-size:14px;font-weight:600;"></span>
+    <button type="button" class="btn btn-ghost btn-sm" onclick="logoutAdmin()">Logout</button>
+  </div>
+</div>
+
+<div class="container">
+  <div class="page-header">
+    <h1>User Management</h1>
+    <p>Manage user accounts and reliability</p>
+  </div>
+
+  <div class="search-bar">
+    <span>🔍</span>
+    <input type="text" id="searchInput" placeholder="Search by email or name...">
+  </div>
+
+  <div class="user-count" id="userCount">Users (0)</div>
+  <div class="user-list" id="userList"></div>
+</div>
+
+<script src="frontend-api.js"></script>
+<script src="frontend-session.js"></script>
+<script>
+  const admin = requireAdmin();
+  if (!admin) throw new Error("redirect");
+  document.getElementById("adminChip").textContent = admin.name + " (Admin)";
+
+  let usersData = [];
+
+  function formatLastActive(isoText) {
+    if (!isoText) return "Never";
+    const date = new Date(isoText);
+    if (Number.isNaN(date.getTime())) return "Unknown";
+    return date.toLocaleDateString();
+  }
+
+  async function updateUserStatus(userId, nextStatus) {
+    try {
+      await apiRequest(`/api/users/${userId}/status`, {
+        method: "PATCH",
+        body: JSON.stringify({ status: nextStatus })
+      });
+      await loadUsers();
+    } catch (error) {
+      alert(error.message);
+    }
+  }
+
+  function escapeHtml(s) {
+    const d = document.createElement("div");
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  function renderUsers(filterText = "") {
+    const filtered = usersData.filter(user =>
+      user.name.toLowerCase().includes(filterText.toLowerCase()) ||
+      user.email.toLowerCase().includes(filterText.toLowerCase())
+    );
+
+    document.getElementById("userCount").innerText = `Users (${filtered.length})`;
+
+    const container = document.getElementById("userList");
+    if (filtered.length === 0) {
+      container.innerHTML = `<div class="card" style="text-align:center;">No users found</div>`;
+      return;
+    }
+
+    container.innerHTML = filtered.map(user => `
+      <div class="user-card">
+        <div class="user-header">
+          <div>
+            <div class="user-name">${escapeHtml(user.name)}</div>
+            <div class="user-email">${escapeHtml(user.email)} | ${escapeHtml(user.phone)}</div>
+          </div>
+          <div class="action-buttons" style="margin-top:0;">
+            <button type="button" class="btn-sm btn-edit" onclick="updateUserStatus(${user.id}, 'active')">Activate</button>
+            <button type="button" class="btn-sm btn-warn" onclick="updateUserStatus(${user.id}, 'locked')">Lock</button>
+          </div>
+        </div>
+        <div class="user-stats">
+          <span class="stat-badge ${user.reliability >= 80 ? 'reliability-high' : 'reliability-low'}">⭐ ${user.reliability}% Reliability</span>
+          <span class="stat-badge">💰 ${user.credits} Credit</span>
+          <span class="stat-badge">🕐 Last Active: ${formatLastActive(user.lastActive)}</span>
+          <span class="stat-badge">Status: ${escapeHtml(user.status)}</span>
+        </div>
+        <div class="offers-section">
+          <span class="offers-label">Offers:</span>
+          ${(user.offers || []).length ? user.offers.map(skill => `<span class="skill-pill">${escapeHtml(skill)}</span>`).join("") : '<span style="color:#94a3b8;">No skills listed</span>'}
+        </div>
+      </div>
+    `).join("");
+  }
+
+  async function loadUsers() {
+    try {
+      const result = await apiRequest("/api/users");
+      usersData = result.users.map(user => ({
+        id: user.id,
+        name: user.full_name,
+        email: user.email,
+        phone: user.phone,
+        reliability: Number(user.reliability_score),
+        credits: user.credits,
+        lastActive: user.last_active,
+        offers: user.offers,
+        status: user.account_status
+      }));
+      renderUsers(document.getElementById("searchInput").value || "");
+    } catch (error) {
+      document.getElementById("userList").innerHTML = `<div class="card" style="text-align:center;color:#ef4444;">${escapeHtml(error.message)}</div>`;
+      document.getElementById("userCount").innerText = "Users (0)";
+    }
+  }
+
+  const searchInput = document.getElementById("searchInput");
+  searchInput.addEventListener("input", (e) => renderUsers(e.target.value));
+  loadUsers();
+</script>
+
+</body>
+</html>

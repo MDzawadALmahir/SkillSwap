@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SkillSwap | Transaction Monitoring</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="admin-common.css">
+</head>
+<body class="admin-shell">
+
+<div class="navbar">
+  <div class="logo-wrap">
+    <div class="logo-icon">S</div>
+    <div>
+      <div class="admin-brand-title">SkillSwap</div>
+      <div class="logo-sub">Admin · Time Banking System</div>
+    </div>
+  </div>
+  <div class="nav-links">
+    <a href="admin.html">Home</a>
+    <a href="admin_overview.html">Dashboard</a>
+    <a href="user_management.html">Users</a>
+    <a href="transaction_monitoring.html" class="active">Transactions</a>
+    <a href="admin_support.html">Support</a>
+  </div>
+  <div class="nav-actions">
+    <span id="adminChip" style="font-size:14px;font-weight:600;"></span>
+    <button type="button" class="btn btn-ghost btn-sm" onclick="logoutAdmin()">Logout</button>
+  </div>
+</div>
+
+<div class="container">
+  <div class="page-header">
+    <h1>Transaction Monitoring</h1>
+    <p>View and monitor all skill exchange transactions</p>
+  </div>
+
+  <div class="overview-stats">
+    <div class="overview-card">
+      <div class="overview-number" id="statTotal">0</div>
+      <div class="overview-label">Total Transaction</div>
+    </div>
+    <div class="overview-card">
+      <div class="overview-number" id="statCompleted">0</div>
+      <div class="overview-label">Completed</div>
+    </div>
+    <div class="overview-card">
+      <div class="overview-number" id="statDeclined">0</div>
+      <div class="overview-label">Declined</div>
+    </div>
+    <div class="overview-card">
+      <div class="overview-number" id="statPending">0</div>
+      <div class="overview-label">Pending</div>
+    </div>
+  </div>
+
+  <div class="metric-label" style="margin-bottom:14px;">In circulation</div>
+
+  <div class="search-row">
+    <span>🔍</span>
+    <input type="text" id="transactionSearch" placeholder="Search by skill, request or provider...">
+  </div>
+
+  <div class="filter-tabs">
+    <button type="button" class="filter-btn active" data-filter="all">All</button>
+    <button type="button" class="filter-btn" data-filter="pending">Pending (0)</button>
+    <button type="button" class="filter-btn" data-filter="completed">Completed (0)</button>
+    <button type="button" class="filter-btn" data-filter="declined">Declined (0)</button>
+  </div>
+
+  <div class="transactions-section">
+    <div class="section-title">All Transactions</div>
+    <div id="transactionsList" class="empty-transactions">No transactions found</div>
+  </div>
+
+  <div class="metrics-row">
+    <div class="metric-card">
+      <div class="metric-value" id="metricCompletionRate">0%</div>
+      <div class="metric-label">Completion Rate</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-value" id="metricTotalCredit">0</div>
+      <div class="metric-label">Total Credit Exchanged</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-value" id="metricAvgSize">0h</div>
+      <div class="metric-label">Average Transaction Size</div>
+    </div>
+  </div>
+</div>
+
+<script src="frontend-api.js"></script>
+<script src="frontend-session.js"></script>
+<script>
+  const admin = requireAdmin();
+  if (!admin) throw new Error("redirect");
+  document.getElementById("adminChip").textContent = admin.name + " (Admin)";
+
+  let transactions = [];
+
+  function updateUI() {
+    const pendingCount = transactions.filter(t => t.status === "pending").length;
+    const completedCount = transactions.filter(t => t.status === "completed").length;
+    const declinedCount = transactions.filter(t => t.status === "declined").length;
+    document.querySelectorAll(".filter-btn").forEach(btn => {
+      const f = btn.getAttribute("data-filter");
+      if (f === "pending") btn.innerText = `Pending (${pendingCount})`;
+      if (f === "completed") btn.innerText = `Completed (${completedCount})`;
+      if (f === "declined") btn.innerText = `Declined (${declinedCount})`;
+    });
+  }
+
+  function escapeHtml(s) {
+    const d = document.createElement("div");
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  function renderTransactions(filter = "all", searchText = "") {
+    let filtered = [...transactions];
+    if (filter !== "all") {
+      filtered = filtered.filter(t => t.status === filter);
+    }
+    if (searchText.trim() !== "") {
+      const lowerSearch = searchText.toLowerCase();
+      filtered = filtered.filter(t =>
+        t.skill.toLowerCase().includes(lowerSearch) ||
+        t.provider.toLowerCase().includes(lowerSearch) ||
+        t.requester.toLowerCase().includes(lowerSearch)
+      );
+    }
+
+    const container = document.getElementById("transactionsList");
+    if (filtered.length === 0) {
+      container.innerHTML = '<div class="empty-transactions">No transactions found</div>';
+      return;
+    }
+
+    container.innerHTML = filtered.map(t => `
+      <div style="border-bottom:1px solid var(--line); padding:16px 0; display:flex; justify-content:space-between; flex-wrap:wrap; gap:12px;">
+        <div>
+          <strong style="font-size:16px;">${escapeHtml(t.skill)}</strong><br>
+          <span style="font-size:14px; color:var(--muted);">${escapeHtml(t.provider)} → ${escapeHtml(t.requester)}</span>
+        </div>
+        <div>
+          <span class="pill">${escapeHtml(t.status)}</span>
+        </div>
+      </div>
+    `).join("");
+  }
+
+  let currentFilter = "all";
+  let currentSearch = "";
+
+  function refresh() {
+    renderTransactions(currentFilter, currentSearch);
+  }
+
+  document.querySelectorAll(".filter-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      currentFilter = btn.getAttribute("data-filter");
+      refresh();
+    });
+  });
+
+  document.getElementById("transactionSearch").addEventListener("input", (e) => {
+    currentSearch = e.target.value;
+    refresh();
+  });
+
+  async function loadStats() {
+    const stats = await apiRequest("/api/transactions/stats");
+    document.getElementById("statTotal").innerText = stats.total;
+    document.getElementById("statCompleted").innerText = stats.completed;
+    document.getElementById("statDeclined").innerText = stats.declined;
+    document.getElementById("statPending").innerText = stats.pending;
+    document.getElementById("metricCompletionRate").innerText = `${stats.completion_rate}%`;
+    document.getElementById("metricTotalCredit").innerText = stats.total_credit_exchanged;
+    document.getElementById("metricAvgSize").innerText = `${stats.avg_transaction_size}h`;
+  }
+
+  async function loadTransactions() {
+    const result = await apiRequest("/api/transactions");
+    transactions = result.transactions.map(t => ({
+      id: t.id,
+      skill: t.skill_name,
+      provider: t.provider_name,
+      requester: t.requester_name,
+      status: t.status
+    }));
+    updateUI();
+    refresh();
+  }
+
+  async function bootstrap() {
+    try {
+      await Promise.all([loadStats(), loadTransactions()]);
+    } catch (error) {
+      document.getElementById("transactionsList").innerHTML = `<div class="empty-transactions" style="color:#ef4444;">${escapeHtml(error.message)}</div>`;
+    }
+  }
+
+  bootstrap();
+</script>
+
+</body>
+</html>

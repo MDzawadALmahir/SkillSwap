@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>SkillSwap | Profile</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="navbar">
+  <div class="logo-wrap">
+    <div class="logo-icon">S</div>
+    <div>
+      <div style="font-size:34px;font-weight:800;line-height:1;">SkillSwap</div>
+      <div class="logo-sub">Time Banking System</div>
+    </div>
+  </div>
+  <div class="nav-links">
+    <a href="welcome.html">Home</a>
+    <a href="profile.html" class="active">Profile</a>
+    <a href="users.html">Search</a>
+    <a href="trades.html">Trades</a>
+    <a href="wallet.html">Wallet</a>
+    <a href="messages.html">Messages</a>
+    <a href="certificates.html">Certificates</a>
+    <a href="complaints.html">Complaints</a>
+  </div>
+  <div class="nav-actions">
+    <span id="navChip" style="font-size:14px;"></span>
+    <button type="button" class="btn btn-ghost btn-sm" onclick="logout()">Logout</button>
+  </div>
+</div>
+
+<div class="container">
+  <div class="title">Your Profile</div>
+  <div class="subtitle">Manage your skills and profile information</div>
+
+  <div class="card">
+    <h3 style="margin-bottom:10px;">Basic Information</h3>
+    <label class="metric-label">Name</label>
+    <input id="fullName" placeholder="Name">
+    <p id="emailRo" class="metric-label" style="margin-top:12px;"></p>
+    <p id="profileMsg" style="min-height:22px;margin-top:10px;font-size:15px;"></p>
+    <button type="button" class="btn" id="saveProfile" style="margin-top:8px;">Save name</button>
+    <p class="metric-label" style="margin-top:14px;">Email cannot be changed here (used for login).</p>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-bottom:10px;">Skills You Offer</h3>
+    <p class="metric-label">Preset categories add immediately. <strong>Others</strong> sends a custom name to an admin for approval before it appears on your profile.</p>
+    <div id="offerTags" style="margin-top:10px;"></div>
+    <p id="offerSkillMsg" style="min-height:22px;margin-top:8px;font-size:15px;"></p>
+    <div class="row" style="margin-top:10px;align-items:flex-end;">
+      <div style="flex:1;min-width:180px;">
+        <input id="offerInput" placeholder="Type a skill and Add (added immediately)…">
+      </div>
+      <button type="button" class="btn" id="offerAdd" style="height:46px;">Add</button>
+    </div>
+    <p class="metric-label" style="margin-top:10px;">Quick picks:</p>
+    <div id="offerPick"></div>
+    <div id="otherOfferPanel" class="card" style="margin-top:14px;display:none;background:#f8fafc;">
+      <strong>Request new skill (admin review)</strong>
+      <p class="metric-label" style="margin:6px 0 8px;">Describe the skill or category. An admin will approve or reject it.</p>
+      <input id="otherOfferInput" placeholder="e.g. Beekeeping, 3D Printing…">
+      <button type="button" class="btn" id="otherOfferSubmit" style="margin-top:10px;">Submit for admin review</button>
+      <p id="otherOfferMsg" style="margin-top:8px;font-size:15px;"></p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-bottom:10px;">Skills You're Seeking</h3>
+    <div id="seekTags" style="margin-top:10px;"></div>
+    <p id="seekSkillMsg" style="min-height:22px;margin-top:8px;font-size:15px;"></p>
+    <div class="row" style="margin-top:10px;align-items:flex-end;">
+      <div style="flex:1;min-width:180px;">
+        <input id="seekInput" placeholder="Type a skill and Add (added immediately)…">
+      </div>
+      <button type="button" class="btn" id="seekAdd" style="height:46px;">Add</button>
+    </div>
+    <p class="metric-label" style="margin-top:10px;">Quick picks:</p>
+    <div id="seekPick"></div>
+    <div id="otherSeekPanel" class="card" style="margin-top:14px;display:none;background:#f8fafc;">
+      <strong>Request new skill to learn (admin review)</strong>
+      <input id="otherSeekInput" placeholder="Skill you want to learn…">
+      <button type="button" class="btn" id="otherSeekSubmit" style="margin-top:10px;">Submit for admin review</button>
+      <p id="otherSeekMsg" style="margin-top:8px;font-size:15px;"></p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-bottom:10px;">Custom skill requests</h3>
+    <p class="metric-label">Status of skills you submitted under <strong>Others</strong> (pending / approved / rejected).</p>
+    <div id="skillRequestList" style="margin-top:12px;font-size:15px;"></div>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-bottom:12px;">Account Status</h3>
+    <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <div>Time Credits</div><span class="badge green" id="creditsBadge">—</span>
+    </div>
+    <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <div>Reliability Score</div><span class="badge orange" id="relBadge">—</span>
+    </div>
+    <div class="row" style="justify-content:space-between;align-items:center;">
+      <div>Account Status</div><span class="badge green" id="statusBadge">—</span>
+    </div>
+  </div>
+
+  <div class="card" style="border-color:#fecaca;">
+    <h3 style="margin-bottom:10px;">Danger zone</h3>
+    <p class="subtitle" style="margin-bottom:10px;">Delete your account permanently. This cannot be undone.</p>
+    <input id="deletePassword" type="password" placeholder="Confirm with your password">
+    <button type="button" class="btn btn-danger" id="deleteBtn" style="margin-top:10px;">Delete my account</button>
+    <p id="deleteMsg" style="margin-top:8px;font-size:15px;"></p>
+  </div>
+</div>
+
+<script src="frontend-api.js"></script>
+<script src="frontend-session.js"></script>
+<script>
+  const me = requireMember();
+  if (!me) throw new Error("redirect");
+  const uid = Number(me.id);
+  renderMemberNavChip("navChip");
+
+  const picks = [
+    "Academic Tutoring",
+    "Music",
+    "Languages",
+    "Sport & Fitness",
+    "Arts & Crafts",
+    "Technology",
+    "Cooking",
+    "Photography",
+    "Writing",
+    "Others",
+  ];
+
+  function setMsg(el, text, ok) {
+    el.style.color = ok ? "#16a34a" : "#dc2626";
+    el.textContent = text || "";
+  }
+
+  function pillBtn(label, type) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "tag";
+    b.style.cursor = "pointer";
+    b.style.fontSize = "14px";
+    b.style.padding = "8px 12px";
+    b.textContent = label;
+    b.onclick = () => {
+      if (label === "Others") {
+        if (type === "offer") {
+          document.getElementById("otherOfferPanel").style.display = "block";
+          document.getElementById("otherSeekPanel").style.display = "none";
+        } else {
+          document.getElementById("otherSeekPanel").style.display = "block";
+          document.getElementById("otherOfferPanel").style.display = "none";
+        }
+        return;
+      }
+      addSkill(label, type);
+    };
+    return b;
+  }
+
+  function renderPicks() {
+    const o = document.getElementById("offerPick");
+    const s = document.getElementById("seekPick");
+    o.innerHTML = "";
+    s.innerHTML = "";
+    picks.forEach((p) => o.appendChild(pillBtn(p, "offer")));
+    picks.forEach((p) => s.appendChild(pillBtn(p, "seek")));
+  }
+
+  function renderTags(offers, seeks) {
+    const ot = document.getElementById("offerTags");
+    const st = document.getElementById("seekTags");
+    ot.innerHTML = "";
+    st.innerHTML = "";
+    offers.forEach((x) => ot.appendChild(skillChip(x, "offer")));
+    seeks.forEach((x) => st.appendChild(skillChip(x, "seek")));
+  }
+
+  function skillChip(label, type) {
+    const span = document.createElement("span");
+    span.className = "tag";
+    span.style.fontSize = "14px";
+    span.style.padding = "8px 12px";
+    span.style.marginRight = "6px";
+    span.style.marginBottom = "6px";
+    span.style.display = "inline-flex";
+    span.style.alignItems = "center";
+    span.style.gap = "6px";
+    span.appendChild(document.createTextNode(label));
+    const rm = document.createElement("button");
+    rm.type = "button";
+    rm.textContent = "×";
+    rm.style.border = "0";
+    rm.style.background = "none";
+    rm.style.cursor = "pointer";
+    rm.style.color = "#b91c1c";
+    rm.style.fontWeight = "800";
+    rm.style.fontSize = "16px";
+    rm.onclick = () => removeSkill(label, type);
+    span.appendChild(rm);
+    return span;
+  }
+
+  async function refresh() {
+    const { user } = await apiRequest(`/api/users/${uid}`);
+    document.getElementById("fullName").value = user.full_name;
+    document.getElementById("emailRo").textContent = `Email: ${user.email}`;
+    document.getElementById("creditsBadge").textContent = `${user.credits} hours`;
+    document.getElementById("relBadge").textContent = `${Math.round(Number(user.reliability_score))}%`;
+    document.getElementById("statusBadge").textContent =
+      user.account_status.charAt(0).toUpperCase() + user.account_status.slice(1);
+    renderTags(user.offers || [], user.seeks || []);
+    const u = getCurrentUser();
+    if (u) {
+      u.name = user.full_name;
+      u.credits = user.credits;
+      u.reliability_score = Number(user.reliability_score);
+      setCurrentUser(u);
+      renderMemberNavChip("navChip");
+    }
+    await loadSkillRequests();
+  }
+
+  async function loadSkillRequests() {
+    const box = document.getElementById("skillRequestList");
+    try {
+      const { requests } = await apiRequest(`/api/skill-requests?user_id=${uid}`);
+      if (!requests.length) {
+        box.innerHTML = '<span class="metric-label">No custom requests yet.</span>';
+        return;
+      }
+      box.innerHTML = requests
+        .map(
+          (r) => `
+        <div style="padding:10px 0;border-bottom:1px solid var(--line);">
+          <strong>${r.skill_name}</strong> (${r.skill_type}) — <em>${r.status}</em>
+          ${r.admin_note ? `<div class="metric-label" style="margin-top:4px;">Admin: ${escapeHtml(r.admin_note)}</div>` : ""}
+        </div>`
+        )
+        .join("");
+    } catch (e) {
+      box.innerHTML = `<span style="color:#dc2626;">Could not load requests: ${escapeHtml(e.message)}</span>`;
+    }
+  }
+
+  function escapeHtml(s) {
+    const d = document.createElement("div");
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  async function addSkill(name, type) {
+    const msgEl = type === "offer" ? document.getElementById("offerSkillMsg") : document.getElementById("seekSkillMsg");
+    name = (name || "").trim();
+    if (!name) {
+      setMsg(msgEl, "Enter a skill name.", false);
+      return;
+    }
+    try {
+      await apiRequest(`/api/users/${uid}/skills`, {
+        method: "POST",
+        body: JSON.stringify({ skill_name: name, skill_type: type }),
+      });
+      setMsg(msgEl, "Skill saved.", true);
+      await refresh();
+    } catch (e) {
+      setMsg(msgEl, e.message || "Could not save skill. If the database was not upgraded, run the SQL in db/upgrade_v2_requests_complaints.sql", false);
+    }
+  }
+
+  async function removeSkill(name, type) {
+    const msgEl = type === "offer" ? document.getElementById("offerSkillMsg") : document.getElementById("seekSkillMsg");
+    try {
+      await apiRequest(
+        `/api/users/${uid}/skills?skill_name=${encodeURIComponent(name)}&skill_type=${type}`,
+        { method: "DELETE" }
+      );
+      setMsg(msgEl, "Removed.", true);
+      await refresh();
+    } catch (e) {
+      setMsg(msgEl, e.message, false);
+    }
+  }
+
+  async function submitSkillRequest(skillType, name, msgId) {
+    const msg = document.getElementById(msgId);
+    name = (name || "").trim();
+    if (!name) {
+      msg.style.color = "#dc2626";
+      msg.textContent = "Enter a name for the new skill.";
+      return;
+    }
+    try {
+      await apiRequest("/api/skill-requests", {
+        method: "POST",
+        body: JSON.stringify({ user_id: uid, skill_name: name, skill_type: skillType }),
+      });
+      msg.style.color = "#16a34a";
+      msg.textContent = "Submitted. An admin will review it.";
+      await refresh();
+    } catch (e) {
+      msg.style.color = "#dc2626";
+      msg.textContent = e.message;
+    }
+  }
+
+  document.getElementById("offerAdd").onclick = () =>
+    addSkill(document.getElementById("offerInput").value, "offer");
+  document.getElementById("seekAdd").onclick = () =>
+    addSkill(document.getElementById("seekInput").value, "seek");
+
+  document.getElementById("otherOfferSubmit").onclick = () =>
+    submitSkillRequest("offer", document.getElementById("otherOfferInput").value, "otherOfferMsg");
+  document.getElementById("otherSeekSubmit").onclick = () =>
+    submitSkillRequest("seek", document.getElementById("otherSeekInput").value, "otherSeekMsg");
+
+  document.getElementById("saveProfile").onclick = async () => {
+    const msg = document.getElementById("profileMsg");
+    msg.style.color = "#dc2626";
+    msg.textContent = "";
+    const name = document.getElementById("fullName").value.trim();
+    if (!name) {
+      msg.textContent = "Name required.";
+      return;
+    }
+    try {
+      await apiRequest(`/api/users/${uid}/profile`, {
+        method: "PATCH",
+        body: JSON.stringify({ full_name: name }),
+      });
+      msg.style.color = "#16a34a";
+      msg.textContent = "Saved.";
+      await refresh();
+    } catch (e) {
+      msg.textContent = e.message;
+    }
+  };
+
+  document.getElementById("deleteBtn").onclick = async () => {
+    const msg = document.getElementById("deleteMsg");
+    msg.style.color = "#dc2626";
+    msg.textContent = "";
+    const password = document.getElementById("deletePassword").value;
+    if (!password) {
+      msg.textContent = "Enter your password.";
+      return;
+    }
+    if (!confirm("Delete your account permanently?")) return;
+    try {
+      await apiRequest(`/api/users/${uid}`, {
+        method: "DELETE",
+        body: JSON.stringify({ password }),
+      });
+      setCurrentUser(null);
+      window.location.href = "login.html";
+    } catch (e) {
+      msg.textContent = e.message;
+    }
+  };
+
+  renderPicks();
+  refresh().catch((e) => alert(e.message));
+</script>
+</body>
+</html>

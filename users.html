@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SkillSwap | Search Skill</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .search-header {
+      background: var(--surface);
+      border-radius: 16px;
+      padding: 18px;
+      margin-bottom: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      align-items: center;
+      border: 1px solid var(--line);
+    }
+    .search-input {
+      flex: 2;
+      min-width: 200px;
+      padding: 12px 16px;
+      border-radius: 10px;
+      border: 1px solid #d9dfec;
+      font-size: 15px;
+      background: #f5f7fb;
+    }
+    .filter-select {
+      padding: 12px 18px;
+      border-radius: 10px;
+      border: 1px solid #d9dfec;
+      background: #fff;
+      font-weight: 600;
+      font-size: 15px;
+    }
+    .result-count {
+      font-weight: 700;
+      margin-bottom: 16px;
+      color: #334155;
+      font-size: 17px;
+    }
+    .user-grid { display: flex; flex-direction: column; gap: 16px; }
+    .user-card {
+      background: var(--surface);
+      border-radius: 16px;
+      padding: 20px 22px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      border: 1px solid var(--line);
+      box-shadow: 0 2px 8px rgba(17, 24, 39, 0.06);
+    }
+    .user-name {
+      font-size: 1.25rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .skills-section {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 8px 0;
+      align-items: center;
+      font-size: 15px;
+    }
+    .skill-pill {
+      background: #eef2ff;
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #3730a3;
+    }
+    .request-btn {
+      background: var(--brand);
+      border: none;
+      padding: 12px 22px;
+      border-radius: 10px;
+      color: white;
+      font-weight: 700;
+      font-size: 15px;
+      cursor: pointer;
+      min-height: 48px;
+    }
+    .request-btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+    .rel-badge {
+      font-size: 13px;
+      font-weight: 700;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: var(--brand);
+      color: #fff;
+    }
+    .rel-badge.low { background: #dc2626; }
+    .user-actions { display: flex; flex-direction: column; gap: 10px; min-width: 170px; align-items: stretch; }
+    .msg-btn {
+      background: #fff; color: var(--brand); border: 2px solid var(--brand);
+      padding: 12px 18px; border-radius: 10px; font-weight: 700; font-size: 15px; cursor: pointer;
+    }
+    .msg-btn:hover { background: #f8fafc; }
+  </style>
+</head>
+<body>
+
+<div class="navbar">
+  <div class="logo-wrap">
+    <div class="logo-icon">S</div>
+    <div>
+      <div style="font-size:34px;font-weight:800;line-height:1;">SkillSwap</div>
+      <div class="logo-sub">Time Banking System</div>
+    </div>
+  </div>
+  <div class="nav-links">
+    <a href="welcome.html">Home</a>
+    <a href="profile.html">Profile</a>
+    <a href="users.html" class="active">Search</a>
+    <a href="trades.html">Trades</a>
+    <a href="wallet.html">Wallet</a>
+    <a href="messages.html">Messages</a>
+    <a href="certificates.html">Certificates</a>
+    <a href="complaints.html">Complaints</a>
+  </div>
+  <div class="nav-actions">
+    <span id="navChip" style="font-size:14px;"></span>
+    <button type="button" class="btn btn-ghost btn-sm" onclick="logout()">Logout</button>
+  </div>
+</div>
+
+<div class="container">
+  <div class="title" style="font-size:36px;">Search Skill</div>
+  <div class="subtitle">Find community members and their skills</div>
+
+  <div class="search-header">
+    <input type="text" class="search-input" placeholder="Search by name or skill..." id="searchInput">
+    <select class="filter-select" id="categoryFilter">
+      <option value="all">All Categories</option>
+      <option value="math">Math</option>
+      <option value="music">Music</option>
+      <option value="photography">Photography</option>
+    </select>
+  </div>
+
+  <div class="result-count" id="resultCount">Loading…</div>
+  <div class="user-grid" id="userGrid"></div>
+</div>
+
+<div class="modal-backdrop" id="sessionModal">
+  <div class="modal">
+    <h3>Request session</h3>
+    <p class="subtitle" style="margin-bottom:12px;" id="modalProviderLabel"></p>
+    <label class="metric-label">Skill (from their offers)</label>
+    <select id="modalSkill"></select>
+    <label class="metric-label" style="display:block;margin-top:12px;">Credit hours</label>
+    <input type="number" id="modalHours" value="1" min="0.5" step="0.5">
+    <p id="modalMsg" style="min-height:22px;margin-top:10px;color:#dc2626;font-size:14px;"></p>
+    <div class="row" style="margin-top:8px;justify-content:flex-end;gap:10px;">
+      <button type="button" class="btn btn-ghost" id="modalCancel">Cancel</button>
+      <button type="button" class="btn" id="modalSubmit">Send request</button>
+    </div>
+  </div>
+</div>
+
+<script src="frontend-api.js"></script>
+<script src="frontend-session.js"></script>
+<script>
+  const me = requireMember();
+  if (!me) throw new Error("redirect");
+  renderMemberNavChip("navChip");
+
+  let usersData = [];
+  let modalProvider = null;
+
+  function openSessionModalById(id) {
+    const user = usersData.find((u) => u.id === id);
+    if (user) openSessionModal(user);
+  }
+
+  function openSessionModal(user) {
+    modalProvider = user;
+    document.getElementById("modalProviderLabel").textContent =
+      `Request a session with ${user.name}`;
+    const sel = document.getElementById("modalSkill");
+    sel.innerHTML = "";
+    user.offers.forEach((s) => {
+      const o = document.createElement("option");
+      o.value = s;
+      o.textContent = s;
+      sel.appendChild(o);
+    });
+    document.getElementById("modalHours").value = "1";
+    document.getElementById("modalMsg").textContent = "";
+    document.getElementById("sessionModal").classList.add("open");
+  }
+
+  function closeSessionModal() {
+    modalProvider = null;
+    document.getElementById("sessionModal").classList.remove("open");
+  }
+
+  document.getElementById("modalCancel").onclick = closeSessionModal;
+  document.getElementById("sessionModal").addEventListener("click", (e) => {
+    if (e.target.id === "sessionModal") closeSessionModal();
+  });
+
+  document.getElementById("modalSubmit").onclick = async () => {
+    const msg = document.getElementById("modalMsg");
+    msg.style.color = "#dc2626";
+    msg.textContent = "";
+    if (!modalProvider) return;
+    const skill = document.getElementById("modalSkill").value;
+    const hours = parseFloat(document.getElementById("modalHours").value);
+    if (!skill || !hours || hours <= 0) {
+      msg.textContent = "Pick a skill and valid hours.";
+      return;
+    }
+    try {
+      await apiRequest("/api/transactions", {
+        method: "POST",
+        body: JSON.stringify({
+          requester_user_id: me.id,
+          provider_user_id: modalProvider.id,
+          skill_name: skill,
+          credit_hours: hours,
+        }),
+      });
+      msg.style.color = "#16a34a";
+      msg.textContent = "Request sent. Check Trades for status.";
+      setTimeout(() => {
+        closeSessionModal();
+      }, 800);
+    } catch (e) {
+      msg.textContent = e.message;
+    }
+  };
+
+  function renderUsers(filterText = "", category = "all") {
+    const filtered = usersData.filter((user) => {
+      const matchesName = user.name.toLowerCase().includes(filterText.toLowerCase());
+      const offersMatch = user.offers.some((skill) =>
+        skill.toLowerCase().includes(filterText.toLowerCase())
+      );
+      const seeksMatch = user.seeks.some((skill) =>
+        skill.toLowerCase().includes(filterText.toLowerCase())
+      );
+      const searchMatch = matchesName || offersMatch || seeksMatch || filterText === "";
+      let categoryMatch = true;
+      if (category !== "all") {
+        const allSkills = [...user.offers, ...user.seeks].map((s) => s.toLowerCase());
+        categoryMatch = allSkills.some((s) => s.includes(category));
+      }
+      return searchMatch && categoryMatch;
+    });
+
+    document.getElementById("resultCount").innerText = `${filtered.length} user${
+      filtered.length !== 1 ? "s" : ""
+    } found`;
+    const container = document.getElementById("userGrid");
+    if (filtered.length === 0) {
+      container.innerHTML = `<div class="card" style="text-align:center;">No members match your search.</div>`;
+      return;
+    }
+
+    container.innerHTML = filtered
+      .map((user) => {
+        const rel = Math.round(user.reliability);
+        const relClass = rel < 50 ? "rel-badge low" : "rel-badge";
+        const canRequest = user.offers.length > 0;
+        return `
+      <div class="user-card">
+        <div class="user-info" style="flex:2;min-width:220px;">
+          <div class="user-name">
+            ${escapeHtml(user.name)}
+            <span class="pill">${user.credits} credits</span>
+            <span class="${relClass}">${rel}%</span>
+          </div>
+          <div class="skills-section">
+            <strong>Offers:</strong>
+            ${
+              user.offers.length
+                ? user.offers.map((s) => `<span class="skill-pill">${escapeHtml(s)}</span>`).join("")
+                : '<span style="color:#94a3b8;">No skills listed</span>'
+            }
+          </div>
+          <div class="skills-section">
+            <strong>Seeking:</strong>
+            ${
+              user.seeks.length
+                ? user.seeks.map((s) => `<span class="skill-pill">${escapeHtml(s)}</span>`).join("")
+                : '<span style="color:#94a3b8;">No skills listed</span>'
+            }
+          </div>
+        </div>
+        <div class="user-actions">
+          <button type="button" class="msg-btn" onclick="location.href='messages.html?with=${user.id}'">Message</button>
+          <button type="button" class="request-btn" ${canRequest ? "" : "disabled"}
+            onclick="openSessionModalById(${user.id})">
+            Request Session
+          </button>
+        </div>
+      </div>`;
+      })
+      .join("");
+  }
+
+  function escapeHtml(s) {
+    const d = document.createElement("div");
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  async function loadUsers() {
+    try {
+      const result = await apiRequest("/api/users");
+      usersData = result.users
+        .filter((u) => u.id !== me.id && (u.role === "member" || u.role === "admin"))
+        .map((u) => ({
+          id: u.id,
+          name: u.full_name,
+          credits: u.credits,
+          reliability: Number(u.reliability_score),
+          offers: u.offers || [],
+          seeks: u.seeks || [],
+        }));
+      renderUsers();
+    } catch (error) {
+      document.getElementById("userGrid").innerHTML = `<div class="card" style="color:#dc2626;">${error.message}</div>`;
+      document.getElementById("resultCount").innerText = "0 users found";
+    }
+  }
+
+  const searchInput = document.getElementById("searchInput");
+  const categoryFilter = document.getElementById("categoryFilter");
+  function updateSearch() {
+    renderUsers(searchInput.value, categoryFilter.value);
+  }
+  searchInput.addEventListener("input", updateSearch);
+  categoryFilter.addEventListener("change", updateSearch);
+  loadUsers();
+</script>
+</body>
+</html>

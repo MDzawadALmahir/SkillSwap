@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>SkillSwap | Admin Home</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="admin-common.css">
+</head>
+<body class="admin-shell">
+
+<div class="navbar">
+  <div class="logo-wrap">
+    <div class="logo-icon">S</div>
+    <div>
+      <div class="admin-brand-title">SkillSwap</div>
+      <div class="logo-sub">Admin · Time Banking System</div>
+    </div>
+  </div>
+  <div class="nav-links">
+    <a href="admin.html" class="active">Home</a>
+    <a href="admin_overview.html">Dashboard</a>
+    <a href="user_management.html">Users</a>
+    <a href="transaction_monitoring.html">Transactions</a>
+    <a href="admin_support.html">Support</a>
+  </div>
+  <div class="nav-actions">
+    <span id="adminChip" style="font-size:14px;font-weight:600;"></span>
+    <button type="button" class="btn btn-ghost btn-sm" onclick="logoutAdmin()">Logout</button>
+  </div>
+</div>
+
+<div class="container">
+  <div class="hero">
+    <h2 id="adminWelcome">Welcome back, Admin!</h2>
+    <p>Exchange skills, earn time credits, and grow your community.</p>
+  </div>
+
+  <div class="grid-3">
+    <div class="card">
+      <div class="metric-label">Time Credits</div>
+      <div class="metric-value" style="color:#e5961a;">10</div>
+      <div class="metric-label">Available Hours</div>
+    </div>
+    <div class="card">
+      <div class="metric-label">Reliability Score</div>
+      <div class="metric-value" style="color:#16a34a;">100%</div>
+      <div class="metric-label">Excellent</div>
+    </div>
+    <div class="card">
+      <div class="metric-label">Active Members</div>
+      <div class="metric-value" style="color:#4f46e5;">7</div>
+      <div class="metric-label">In The Community</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-bottom:10px;">Quick Actions</h3>
+    <div class="grid-2">
+      <button class="btn btn-success" onclick="location.href='users.html'">Find Skills →</button>
+      <button class="btn btn-secondary" onclick="location.href='admin_overview.html'">Open Dashboard →</button>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h3>Skills You Offer</h3>
+      <p class="subtitle" style="margin:8px 0 0;">No Skills Added yet</p>
+    </div>
+    <div class="card">
+      <h3>Skills You're Seeking</h3>
+      <p class="subtitle" style="margin:8px 0 0;">No Skills Added yet</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-bottom:8px;">Activity Summary</h3>
+    <div class="row" style="justify-content:space-between;align-items:center;">
+      <div style="color:#64748b;">Pending Transactions</div>
+      <span class="badge green">0</span>
+    </div>
+    <div class="row" style="justify-content:space-between;align-items:center;margin-top:8px;">
+      <div style="color:#64748b;">Complete Transaction</div>
+      <span class="badge blue">0</span>
+    </div>
+    <div style="margin-top:12px;"><a href="transaction_monitoring.html" style="color:#1f2a88;text-decoration:none;font-weight:600;">View All Transactions →</a></div>
+  </div>
+</div>
+
+<script src="frontend-session.js"></script>
+<script>
+  const a = requireAdmin();
+  if (!a) throw new Error("redirect");
+  document.getElementById("adminChip").textContent = a.name + " (Admin)";
+  document.getElementById("adminWelcome").textContent = "Welcome back, " + a.name + "!";
+</script>
+</body>
+</html>

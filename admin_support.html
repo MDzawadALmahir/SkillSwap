@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>SkillSwap | Admin — Support</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="admin-common.css">
+</head>
+<body class="admin-shell">
+
+<div class="navbar">
+  <div class="logo-wrap">
+    <div class="logo-icon">S</div>
+    <div>
+      <div class="admin-brand-title">SkillSwap</div>
+      <div class="logo-sub">Admin · Time Banking System</div>
+    </div>
+  </div>
+  <div class="nav-links">
+    <a href="admin.html">Home</a>
+    <a href="admin_overview.html">Dashboard</a>
+    <a href="user_management.html">Users</a>
+    <a href="transaction_monitoring.html">Transactions</a>
+    <a href="admin_support.html" class="active">Support</a>
+  </div>
+  <div class="nav-actions">
+    <span id="adminChip" style="font-size:14px;font-weight:600;"></span>
+    <button type="button" class="btn btn-ghost btn-sm" onclick="logoutAdmin()">Logout</button>
+  </div>
+</div>
+
+<div class="container">
+  <div class="title">Support desk</div>
+  <div class="subtitle">Review custom skill requests and member complaints. Send feedback that users will see on their profile or complaints page.</div>
+
+  <div class="card">
+    <h2 style="margin-bottom:12px;font-size:22px;">Skill requests (Others)</h2>
+    <div class="row" style="margin-bottom:12px;gap:10px;">
+      <button type="button" class="pill tab-active filter-btn-lg" style="border:0;cursor:pointer;" data-sr="pending">Pending</button>
+      <button type="button" class="pill filter-btn-lg" style="border:0;cursor:pointer;" data-sr="all">All</button>
+    </div>
+    <div id="skillReqBox"></div>
+  </div>
+
+  <div class="card">
+    <h2 style="margin-bottom:12px;font-size:22px;">Complaints & reports</h2>
+    <div class="row" style="margin-bottom:12px;gap:10px;flex-wrap:wrap;">
+      <button type="button" class="pill tab-active filter-btn-lg" style="border:0;cursor:pointer;" data-cf="all">All</button>
+      <button type="button" class="pill filter-btn-lg" style="border:0;cursor:pointer;" data-cf="open">Open</button>
+      <button type="button" class="pill filter-btn-lg" style="border:0;cursor:pointer;" data-cf="in_progress">In progress</button>
+      <button type="button" class="pill filter-btn-lg" style="border:0;cursor:pointer;" data-cf="resolved">Resolved</button>
+    </div>
+    <div id="complaintBox"></div>
+  </div>
+</div>
+
+<script src="frontend-api.js"></script>
+<script src="frontend-session.js"></script>
+<script>
+  const admin = requireAdmin();
+  if (!admin) throw new Error("redirect");
+  const adminId = Number(admin.id);
+  document.getElementById("adminChip").textContent = admin.name + " (Admin)";
+
+  let srFilter = "pending";
+  let cfFilter = "all";
+
+  function esc(s) {
+    const d = document.createElement("div");
+    d.textContent = s == null ? "" : String(s);
+    return d.innerHTML;
+  }
+
+  document.querySelectorAll("[data-sr]").forEach((b) => {
+    b.onclick = () => {
+      srFilter = b.getAttribute("data-sr");
+      document.querySelectorAll("[data-sr]").forEach((x) => x.classList.remove("tab-active"));
+      b.classList.add("tab-active");
+      loadSkillRequests();
+    };
+  });
+
+  document.querySelectorAll("[data-cf]").forEach((b) => {
+    b.onclick = () => {
+      cfFilter = b.getAttribute("data-cf");
+      document.querySelectorAll("[data-cf]").forEach((x) => x.classList.remove("tab-active"));
+      b.classList.add("tab-active");
+      loadComplaints();
+    };
+  });
+
+  async function loadSkillRequests() {
+    const box = document.getElementById("skillReqBox");
+    box.innerHTML = "Loading…";
+    try {
+      const q = srFilter === "all" ? "all" : "pending";
+      const { requests } = await apiRequest(`/api/admin/skill-requests?status=${q}`);
+      if (!requests.length) {
+        box.innerHTML = "<p class=\"metric-label\">No requests.</p>";
+        return;
+      }
+      box.innerHTML = requests
+        .map((r) => {
+          const noteId = `note-sr-${r.id}`;
+          const actions =
+            r.status === "pending"
+              ? `<div class="row" style="margin-top:10px;gap:10px;">
+                   <button type="button" class="btn btn-success" onclick="reviewSr(${r.id},'approve')">Approve</button>
+                   <button type="button" class="btn btn-danger" onclick="reviewSr(${r.id},'reject')">Reject</button>
+                 </div>`
+              : "";
+          return `
+            <div style="border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px;">
+              <strong>${esc(r.skill_name)}</strong> (${esc(r.skill_type)}) · ${esc(r.user_name)} · <em>${esc(r.status)}</em>
+              <div class="metric-label" style="margin-top:6px;">${r.admin_note ? "Note: " + esc(r.admin_note) : ""}</div>
+              <label class="metric-label">Message to user (optional)</label>
+              <input id="${noteId}" placeholder="Shown with approve/reject" style="margin-top:6px;">
+              ${actions}
+            </div>`;
+        })
+        .join("");
+    } catch (e) {
+      box.innerHTML = `<p style="color:#dc2626;">${esc(e.message)}</p>`;
+    }
+  }
+
+  window.reviewSr = async function (id, decision) {
+    const noteEl = document.getElementById(`note-sr-${id}`);
+    const admin_note = noteEl ? noteEl.value.trim() : "";
+    try {
+      await apiRequest(`/api/admin/skill-requests/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ decision, admin_note, admin_user_id: adminId }),
+      });
+      await loadSkillRequests();
+    } catch (e) {
+      alert(e.message);
+    }
+  };
+
+  async function loadComplaints() {
+    const box = document.getElementById("complaintBox");
+    box.innerHTML = "Loading…";
+    try {
+      const q = cfFilter === "all" ? "all" : cfFilter;
+      const { complaints } = await apiRequest(`/api/admin/complaints?status=${q}`);
+      if (!complaints.length) {
+        box.innerHTML = "<p class=\"metric-label\">No complaints.</p>";
+        return;
+      }
+      box.innerHTML = complaints
+        .map((c) => {
+          const fid = `fb-${c.id}`;
+          const sid = `st-${c.id}`;
+          return `
+            <div style="border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:14px;">
+              <div style="font-weight:800;">${esc(c.subject)} <span class="pill">${esc(c.status)}</span> <span class="pill">${esc(c.category)}</span></div>
+              <div class="metric-label" style="margin-top:6px;">From: ${esc(c.submitter_name)}</div>
+              ${c.target_user_name ? `<div class="metric-label">About: ${esc(c.target_user_name)}</div>` : ""}
+              <div style="margin-top:8px;font-size:15px;">${esc(c.body)}</div>
+              <label class="metric-label" style="margin-top:10px;">Status</label>
+              <select id="${sid}" style="margin-top:6px;">
+                <option value="open" ${c.status === "open" ? "selected" : ""}>open</option>
+                <option value="in_progress" ${c.status === "in_progress" ? "selected" : ""}>in_progress</option>
+                <option value="resolved" ${c.status === "resolved" ? "selected" : ""}>resolved</option>
+                <option value="closed" ${c.status === "closed" ? "selected" : ""}>closed</option>
+              </select>
+              <label class="metric-label" style="margin-top:10px;">Feedback to user (visible to them)</label>
+              <textarea id="${fid}" rows="3" style="width:100%;margin-top:6px;padding:10px;border-radius:10px;border:1px solid #d9dfec;font-size:15px;">${esc(
+                c.admin_feedback || ""
+              )}</textarea>
+              <button type="button" class="btn" style="margin-top:10px;" onclick="saveComplaint(${c.id})">Save response</button>
+            </div>`;
+        })
+        .join("");
+    } catch (e) {
+      box.innerHTML = `<p style="color:#dc2626;">${esc(e.message)}</p>`;
+    }
+  }
+
+  window.saveComplaint = async function (id) {
+    const st = document.getElementById(`st-${id}`).value;
+    const admin_feedback = document.getElementById(`fb-${id}`).value.trim();
+    try {
+      await apiRequest(`/api/admin/complaints/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ status: st, admin_feedback }),
+      });
+      await loadComplaints();
+    } catch (e) {
+      alert(e.message);
+    }
+  };
+
+  loadSkillRequests();
+  loadComplaints();
+</script>
+</body>
+</html>

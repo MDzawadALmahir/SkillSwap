@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>SkillSwap | Certificates</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="navbar">
+  <div class="logo-wrap">
+    <div class="logo-icon">S</div>
+    <div>
+      <div style="font-size:34px;font-weight:800;line-height:1;">SkillSwap</div>
+      <div class="logo-sub">Time Banking System</div>
+    </div>
+  </div>
+  <div class="nav-links">
+    <a href="welcome.html">Home</a>
+    <a href="profile.html">Profile</a>
+    <a href="users.html">Search</a>
+    <a href="trades.html">Trades</a>
+    <a href="wallet.html">Wallet</a>
+    <a href="messages.html">Messages</a>
+    <a href="certificates.html" class="active">Certificates</a>
+    <a href="complaints.html">Complaints</a>
+  </div>
+  <div class="nav-actions">
+    <span id="navChip" style="font-size:14px;"></span>
+    <button type="button" class="btn btn-ghost btn-sm" onclick="logout()">Logout</button>
+  </div>
+</div>
+
+<div class="container">
+  <div class="title">Certificates & transcripts</div>
+  <div class="subtitle">After a session is completed, you (as student) can request a certificate. Your teacher must approve it before you can download.</div>
+  <div id="certBox" class="card"></div>
+</div>
+
+<script src="frontend-api.js"></script>
+<script src="frontend-session.js"></script>
+<script>
+  const me = requireMember();
+  if (!me) throw new Error("redirect");
+  const uid = Number(me.id);
+  renderMemberNavChip("navChip");
+
+  function esc(s) {
+    const d = document.createElement("div");
+    d.textContent = s == null ? "" : String(s);
+    return d.innerHTML;
+  }
+
+  function downloadUrl(certId, type) {
+    return apiDownloadUrl(`/api/certificates/${certId}/download?type=${type}&user_id=${uid}`);
+  }
+
+  async function teacherRespond(id, decision) {
+    const note = prompt("Optional note to the student (shown on their record):") || "";
+    try {
+      await apiRequest(`/api/certificates/${id}/teacher-respond`, {
+        method: "PATCH",
+        body: JSON.stringify({ teacher_user_id: uid, decision, teacher_note: note }),
+      });
+      await load();
+    } catch (e) {
+      alert(e.message);
+    }
+  }
+  window.teacherRespond = teacherRespond;
+
+  async function load() {
+    const box = document.getElementById("certBox");
+    try {
+      const { certificates } = await apiRequest(`/api/certificates/my?user_id=${uid}`);
+      if (!certificates.length) {
+        box.innerHTML = "<p class=\"metric-label\">No certificate requests yet. Complete a session in Trades, then use “Request certificate”.</p>";
+        return;
+      }
+      box.innerHTML = certificates
+        .map((c) => {
+          const isStudent = c.student_user_id === uid;
+          const isTeacher = c.teacher_user_id === uid;
+          let actions = "";
+          if (c.status === "approved") {
+            actions = `<div class="row" style="margin-top:10px;gap:10px;flex-wrap:wrap;">
+              <a class="btn" href="${downloadUrl(c.id, "certificate")}" download>Download certificate</a>
+              <a class="btn btn-secondary" href="${downloadUrl(c.id, "transcript")}" download>Download transcript</a>
+            </div>`;
+          } else if (c.status === "pending" && isTeacher) {
+            actions = `<div class="row" style="margin-top:10px;gap:10px;">
+              <button type="button" class="btn btn-success" onclick="teacherRespond(${c.id},'approve')">Confirm & issue</button>
+              <button type="button" class="btn btn-danger" onclick="teacherRespond(${c.id},'reject')">Reject</button>
+            </div>`;
+          } else if (c.status === "pending" && isStudent) {
+            actions = `<p class="metric-label" style="margin-top:8px;">Waiting for instructor confirmation.</p>`;
+          } else if (c.status === "rejected") {
+            actions = `<p class="metric-label" style="margin-top:8px;color:#b91c1c;">Rejected.${c.teacher_note ? " " + esc(c.teacher_note) : ""}</p>`;
+          }
+          const role = isStudent ? "You are the student" : "You are the instructor";
+          return `
+          <div style="border-bottom:1px solid var(--line);padding:16px 0;">
+            <div style="font-weight:800;font-size:17px;">${esc(c.skill_name)} <span class="pill">${esc(c.status)}</span></div>
+            <div class="metric-label" style="margin-top:6px;">${role} · Student: <strong>${esc(c.student_name)}</strong> · Teacher: <strong>${esc(c.teacher_name)}</strong></div>
+            <div class="metric-label">Requested: ${esc(c.requested_at || "")}</div>
+            ${c.issued_at ? `<div class="metric-label">Issued: ${esc(c.issued_at)}</div>` : ""}
+            ${actions}
+          </div>`;
+        })
+        .join("");
+    } catch (e) {
+      box.innerHTML = `<p style="color:#dc2626;">${esc(e.message)}</p>`;
+    }
+  }
+
+  load();
+</script>
+</body>
+</html>

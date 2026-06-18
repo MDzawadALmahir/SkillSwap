@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>SkillSwap | Home</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="navbar">
+  <div class="logo-wrap">
+    <div class="logo-icon">S</div>
+    <div>
+      <div style="font-size:34px;font-weight:800;line-height:1;">SkillSwap</div>
+      <div class="logo-sub">Time Banking System</div>
+    </div>
+  </div>
+  <div class="nav-links">
+    <a href="welcome.html" class="active">Home</a>
+    <a href="profile.html">Profile</a>
+    <a href="users.html">Search</a>
+    <a href="trades.html">Trades</a>
+    <a href="wallet.html">Wallet</a>
+    <a href="messages.html">Messages</a>
+    <a href="certificates.html">Certificates</a>
+    <a href="complaints.html">Complaints</a>
+  </div>
+  <div class="nav-actions">
+    <span id="navChip" style="font-size:14px;"></span>
+    <button type="button" class="btn btn-ghost btn-sm" onclick="logout()">Logout</button>
+  </div>
+</div>
+
+<div class="container">
+  <div class="hero">
+    <h2 id="heroTitle">Welcome back!</h2>
+    <p>Exchange skills, earn time credits, and grow your community.</p>
+  </div>
+
+  <div class="grid-3">
+    <div class="card">
+      <div class="metric-label">Time Credits</div>
+      <div class="metric-value" style="color:#e5961a;" id="mCredits">—</div>
+      <div class="metric-label">Available Hours</div>
+    </div>
+    <div class="card">
+      <div class="metric-label">Reliability Score</div>
+      <div class="metric-value" style="color:#16a34a;" id="mRel">—</div>
+      <div class="metric-label" id="mRelLabel">—</div>
+    </div>
+    <div class="card">
+      <div class="metric-label">Active Members</div>
+      <div class="metric-value" style="color:#4f46e5;" id="mMembers">—</div>
+      <div class="metric-label">In The Community</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-bottom:12px;">Quick Actions</h3>
+    <div class="grid-2">
+      <button class="btn btn-success" onclick="location.href='users.html'">Find Skills →</button>
+      <button class="btn btn-secondary" onclick="location.href='profile.html'">Edit Profile →</button>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h3 style="margin-bottom:10px;">Skills You Offer</h3>
+      <div id="homeOffers">—</div>
+    </div>
+    <div class="card">
+      <h3 style="margin-bottom:10px;">Skills You're Seeking</h3>
+      <div id="homeSeeks">—</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-bottom:8px;">Activity Summary</h3>
+    <div class="row" style="justify-content:space-between;align-items:center;">
+      <div style="color:#64748b;">Pending Transactions</div>
+      <span class="badge green" id="homePending">0</span>
+    </div>
+    <div class="row" style="justify-content:space-between;align-items:center;margin-top:8px;">
+      <div style="color:#64748b;">Complete Transaction</div>
+      <span class="badge blue" id="homeDone">0</span>
+    </div>
+    <div style="margin-top:12px;font-size:15px;"><a href="trades.html" style="color:#1f2a88;text-decoration:none;font-weight:600;">View All Transactions →</a></div>
+  </div>
+</div>
+
+<script src="frontend-api.js"></script>
+<script src="frontend-session.js"></script>
+<script>
+  const me = requireMember();
+  if (!me) throw new Error("redirect");
+  renderMemberNavChip("navChip");
+
+  function tagLine(skills) {
+    if (!skills || !skills.length) return '<span class="metric-label">No skills yet — add some in Profile.</span>';
+    return skills.map((s) => `<span class="tag" style="font-size:14px;padding:8px 12px;">${escapeHtml(s)}</span>`).join(" ");
+  }
+
+  function escapeHtml(s) {
+    const d = document.createElement("div");
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  async function load() {
+    const { user } = await apiRequest(`/api/users/${me.id}`);
+    document.getElementById("heroTitle").textContent = `Welcome back, ${user.full_name}!`;
+    document.getElementById("mCredits").textContent = user.credits;
+    const rel = Math.round(Number(user.reliability_score));
+    document.getElementById("mRel").textContent = rel + "%";
+    document.getElementById("mRelLabel").textContent = rel >= 80 ? "Excellent" : rel >= 50 ? "Good" : "Needs attention";
+
+    const all = await apiRequest("/api/users");
+    document.getElementById("mMembers").textContent = all.count;
+
+    document.getElementById("homeOffers").innerHTML = tagLine(user.offers || []);
+    document.getElementById("homeSeeks").innerHTML = tagLine(user.seeks || []);
+
+    const mine = await apiRequest(`/api/transactions?involving_user_id=${me.id}`);
+    const pending = mine.transactions.filter((t) => t.status === "pending").length;
+    const done = mine.transactions.filter((t) => t.status === "completed").length;
+    document.getElementById("homePending").textContent = pending;
+    document.getElementById("homeDone").textContent = done;
+  }
+
+  load().catch((e) => alert(e.message));
+</script>
+</body>
+</html>

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>SkillSwap | Trades</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="navbar">
+  <div class="logo-wrap">
+    <div class="logo-icon">S</div>
+    <div>
+      <div style="font-size:34px;font-weight:800;line-height:1;">SkillSwap</div>
+      <div class="logo-sub">Time Banking System</div>
+    </div>
+  </div>
+  <div class="nav-links">
+    <a href="welcome.html">Home</a>
+    <a href="profile.html">Profile</a>
+    <a href="users.html">Search</a>
+    <a href="trades.html" class="active">Trades</a>
+    <a href="wallet.html">Wallet</a>
+    <a href="messages.html">Messages</a>
+    <a href="certificates.html">Certificates</a>
+    <a href="complaints.html">Complaints</a>
+  </div>
+  <div class="nav-actions">
+    <span id="navChip" style="font-size:14px;"></span>
+    <button type="button" class="btn btn-ghost btn-sm" onclick="logout()">Logout</button>
+  </div>
+</div>
+
+<div class="container">
+  <div class="title">Transactions</div>
+  <div class="subtitle">Manage your skill exchange sessions</div>
+
+  <div class="card">
+    <div class="row" id="tradeTabs" style="gap:12px;flex-wrap:wrap;"></div>
+  </div>
+
+  <div class="hero" style="text-align:left;" id="tradeBody">
+    <p style="opacity:0.95;">Loading…</p>
+  </div>
+</div>
+
+<script src="frontend-api.js"></script>
+<script src="frontend-session.js"></script>
+<script>
+  const me = requireMember();
+  if (!me) throw new Error("redirect");
+  renderMemberNavChip("navChip");
+
+  let currentTab = "pending";
+
+  async function updateStatus(id, status) {
+    try {
+      await apiRequest(`/api/transactions/${id}/status`, {
+        method: "PATCH",
+        body: JSON.stringify({ status }),
+      });
+      await loadTrades();
+    } catch (e) {
+      alert(e.message);
+    }
+  }
+  window.updateStatus = updateStatus;
+
+  async function requestCertificate(transactionId) {
+    try {
+      await apiRequest("/api/certificates/request", {
+        method: "POST",
+        body: JSON.stringify({
+          student_user_id: Number(me.id),
+          transaction_id: transactionId,
+        }),
+      });
+      alert(
+        "Certificate request sent. Your teacher must approve it before you can download it from Certificates."
+      );
+    } catch (e) {
+      alert(e.message);
+    }
+  }
+  window.requestCertificate = requestCertificate;
+
+  function renderTabs(stats) {
+    const tabs = [
+      { key: "pending", label: `Pending (${stats.pending})` },
+      { key: "completed", label: `Completed (${stats.completed})` },
+      { key: "declined", label: `Declined (${stats.declined})` },
+    ];
+    document.getElementById("tradeTabs").innerHTML = tabs
+      .map(
+        (t) => `
+      <button type="button" class="pill ${t.key === currentTab ? "tab-active" : ""} filter-btn-lg"
+        style="border:0;cursor:pointer;" data-tab="${t.key}">${t.label}</button>
+    `
+      )
+      .join("");
+    document.querySelectorAll("#tradeTabs button").forEach((btn) => {
+      btn.onclick = () => {
+        currentTab = btn.getAttribute("data-tab");
+        loadTrades();
+      };
+    });
+  }
+
+  async function loadTrades() {
+    const body = document.getElementById("tradeBody");
+    try {
+      const stats = await apiRequest("/api/transactions/stats");
+      renderTabs(stats);
+
+      const res = await apiRequest(
+        `/api/transactions?involving_user_id=${me.id}&status=${currentTab}`
+      );
+      const rows = res.transactions || [];
+
+      if (rows.length === 0) {
+        const titles = {
+          pending: "No Pending Transactions",
+          completed: "No Completed Transactions",
+          declined: "No Declined Transactions",
+        };
+        body.innerHTML = `<h3 style="font-size:26px;">${titles[currentTab]}</h3>`;
+        return;
+      }
+
+      body.innerHTML = `
+        <h3 style="font-size:22px;margin-bottom:14px;">Your ${currentTab} sessions</h3>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          ${rows
+            .map((t) => {
+              const isProvider = t.provider_user_id === me.id;
+              const isRequester = t.requester_user_id === me.id;
+              const roleLabel = isProvider
+                ? `You teach · Requester: ${escapeHtml(t.requester_name)}`
+                : `You learn · Provider: ${escapeHtml(t.provider_name)}`;
+              let actions = "";
+              if (t.status === "pending" && isProvider) {
+                actions = `<div class="row" style="margin-top:10px;gap:10px;">
+                    <button type="button" class="btn btn-success" style="font-size:15px;padding:11px 20px;"
+                      onclick="updateStatus(${t.id}, 'completed')">Mark complete</button>
+                    <button type="button" class="btn btn-danger" style="font-size:15px;padding:11px 20px;"
+                      onclick="updateStatus(${t.id}, 'declined')">Decline</button>
+                  </div>`;
+              } else if (t.status === "pending" && isRequester) {
+                actions = `<p style="margin-top:8px;opacity:0.9;font-size:15px;">Waiting for the provider to respond.</p>`;
+              } else if (t.status === "completed" && isRequester) {
+                actions = `<div class="row" style="margin-top:10px;gap:10px;flex-wrap:wrap;">
+                    <button type="button" class="btn" style="font-size:15px;padding:11px 20px;"
+                      onclick="requestCertificate(${t.id})">Request certificate</button>
+                    <a href="messages.html?with=${t.provider_user_id ?? ""}" class="btn btn-secondary" style="font-size:15px;padding:11px 20px;text-decoration:none;display:inline-flex;align-items:center;">Message teacher</a>
+                  </div>`;
+              }
+              return `
+                <div style="background:rgba(255,255,255,0.12);border-radius:12px;padding:14px 16px;">
+                  <div style="font-weight:800;font-size:17px;">${escapeHtml(t.skill_name)}</div>
+                  <div style="font-size:15px;margin-top:6px;opacity:0.95;">${roleLabel}</div>
+                  <div style="font-size:14px;margin-top:4px;opacity:0.9;">${Number(t.credit_hours)} credit hour(s)</div>
+                  ${actions}
+                </div>`;
+            })
+            .join("")}
+        </div>`;
+    } catch (e) {
+      body.innerHTML = `<p style="color:#fecaca;">${escapeHtml(e.message)}</p>`;
+    }
+  }
+
+  function escapeHtml(s) {
+    const d = document.createElement("div");
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  loadTrades();
+</script>
+
+</body>
+</html>

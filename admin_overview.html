@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>SkillSwap | Admin Dashboard</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="admin-common.css">
+</head>
+<body class="admin-shell">
+
+<div class="navbar">
+  <div class="logo-wrap">
+    <div class="logo-icon">S</div>
+    <div>
+      <div class="admin-brand-title">SkillSwap</div>
+      <div class="logo-sub">Admin · Time Banking System</div>
+    </div>
+  </div>
+  <div class="nav-links">
+    <a href="admin.html">Home</a>
+    <a href="admin_overview.html" class="active">Dashboard</a>
+    <a href="user_management.html">Users</a>
+    <a href="transaction_monitoring.html">Transactions</a>
+    <a href="admin_support.html">Support</a>
+  </div>
+  <div class="nav-actions">
+    <span id="adminChip" style="font-size:14px;font-weight:600;"></span>
+    <button type="button" class="btn btn-ghost btn-sm" onclick="logoutAdmin()">Logout</button>
+  </div>
+</div>
+
+<div class="container">
+  <div class="title">Admin Dashboard</div>
+  <div class="subtitle">System overview and statistics</div>
+
+  <div class="grid-3">
+    <div class="card"><div class="metric-label">Total Users</div><div class="metric-value">10</div><div class="metric-label">Registered Members</div></div>
+    <div class="card"><div class="metric-label">Active Users</div><div class="metric-value" style="color:#16a34a;">10</div><div class="metric-label">Active in last 7 days</div></div>
+    <div class="card"><div class="metric-label">Locked Users</div><div class="metric-value" style="color:#dc2626;">10</div><div class="metric-label">Accounts Locked</div></div>
+    <div class="card"><div class="metric-label">Total Credits</div><div class="metric-value" style="color:#1f2a88;">10</div><div class="metric-label">In Circulation</div></div>
+    <div class="card"><div class="metric-label">Pending Tasks</div><div class="metric-value" style="color:#e5961a;">10</div><div class="metric-label">Awaiting Completion</div></div>
+    <div class="card"><div class="metric-label">Completed</div><div class="metric-value" style="color:#16a34a;">10</div><div class="metric-label">Total Transactions</div></div>
+  </div>
+
+  <div class="card">
+    <h3>Recent Transactions</h3>
+    <div style="margin-top:14px;color:#94a3b8;text-align:center;padding:24px 0;">No Transactions yet</div>
+  </div>
+
+  <div class="card">
+    <h3>System Health</h3>
+    <div class="row" style="justify-content:space-between;margin-top:12px;"><span>User Engagement</span><strong>65%</strong></div>
+    <div class="row" style="justify-content:space-between;margin-top:8px;"><span>Locked Accounts</span><strong>10%</strong></div>
+    <div class="row" style="justify-content:space-between;margin-top:8px;"><span>Average Reliability</span><strong>10%</strong></div>
+    <div class="row" style="justify-content:space-between;margin-top:8px;"><span>Credits in Circulation</span><strong>10</strong></div>
+  </div>
+</div>
+
+<script src="frontend-session.js"></script>
+<script>
+  const a = requireAdmin();
+  if (!a) throw new Error("redirect");
+  document.getElementById("adminChip").textContent = a.name + " (Admin)";
+</script>
+</body>
+</html>

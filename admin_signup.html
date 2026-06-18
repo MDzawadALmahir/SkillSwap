@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>SkillSwap | Admin Signup</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="navbar">
+  <div class="logo-wrap">
+    <div class="logo-icon">S</div>
+    <div>
+      <div style="font-size:40px;font-weight:800;line-height:1;">SkillSwap</div>
+      <div class="logo-sub">Time Banking System · Admin</div>
+    </div>
+  </div>
+  <div class="nav-links">
+    <a href="admin_login.html">Admin Login</a>
+    <a href="admin_signup.html" class="active">Admin Signup</a>
+    <a href="signup.html">Member Signup</a>
+  </div>
+</div>
+
+<div class="container" style="max-width:440px;">
+  <div class="card">
+    <h2 style="text-align:center;font-size:32px;">Admin Signup</h2>
+    <p style="text-align:center;color:#64748b;margin-top:6px;">
+      Default dev secret matches <code>backend/.env.example</code> unless you change it on the server.
+    </p>
+    <input id="name" placeholder="Full name">
+    <input id="email" placeholder="Email">
+    <input id="phone" placeholder="Phone (+8801XXXXXXXXX)">
+    <input id="password" placeholder="Password" type="password">
+    <input id="admin_secret" placeholder="Admin signup secret" type="password">
+    <p id="msg" style="margin-top:8px; min-height:22px; color:#ef4444;"></p>
+    <button class="btn" id="btn" style="width:100%;margin-top:6px;">Create admin account</button>
+    <p style="margin-top:14px;text-align:center;font-size:15px;">
+      <a href="admin_login.html">Back to admin login</a>
+    </p>
+  </div>
+</div>
+
+<script src="frontend-api.js"></script>
+<script>
+  document.getElementById("btn").addEventListener("click", async () => {
+    const name = document.getElementById("name").value.trim();
+    const email = document.getElementById("email").value.trim();
+    const phone = document.getElementById("phone").value.trim();
+    const password = document.getElementById("password").value;
+    const admin_secret = document.getElementById("admin_secret").value;
+    const msg = document.getElementById("msg");
+    msg.style.color = "#ef4444";
+    msg.textContent = "";
+    if (!name || !email || !phone || !password || !admin_secret) {
+      msg.textContent = "Fill all fields including admin secret.";
+      return;
+    }
+    try {
+      await apiRequest("/api/auth/signup", {
+        method: "POST",
+        body: JSON.stringify({
+          name,
+          email,
+          phone,
+          password,
+          role: "admin",
+          admin_secret,
+        }),
+      });
+      msg.style.color = "#16a34a";
+      msg.textContent = "Admin created. Redirecting to admin login...";
+      setTimeout(() => (window.location.href = "admin_login.html"), 900);
+    } catch (e) {
+      msg.textContent = e.message;
+    }
+  });
+</script>
+</body>
+</html>
